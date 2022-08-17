@@ -1,0 +1,108 @@
+---
+title: "Bird Joining"
+author: "Erica Bishop"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+```
+# Task 1: bird joining
+
+```{r}
+bird_observations <- read_csv(here("data", "52_pp52_birds_1.csv"))
+
+sites <- read_csv(here("data", "52_pp52_sites_1.csv"))
+
+surveys <- read_csv(here("data", "52_pp52_surveys_1.csv"))
+
+taxalist <- read_csv(here("data", "52_pp52_taxalist_1.csv"))
+
+```
+```{r}
+birds_subset <- bird_observations |> 
+  filter(species_id %in% c("BHCO", "RWBL")) |> 
+  filter(site_id %in% c("LI-W", "NU-C"))
+
+```
+
+## Left join practice
+
+```{r}
+#join bird subset with sites and taxalist
+birds_left <- birds_subset |> 
+  left_join(y = sites, by = "site_id") |> 
+  left_join(y = taxalist, by = "species_id")
+
+```
+
+## Full join practice
+
+```{r}
+
+birds_full <- birds_subset |> 
+  full_join(y = sites, by = "site_id")
+
+```
+
+## Inner join practice
+
+```{r}
+
+birds_inner <- birds_subset |> 
+  inner_join(y = taxalist, by = "species_id")
+
+birds_compare_left <- birds_subset |> 
+  left_join(y = taxalist, by = "species_id")
+
+```
+
+
+# Task 2: Data wrangling and visualization
+
+rename columns:
+```{r}
+
+birds_observations <- bird_observations |> 
+  rename(birds_obs_notes = notes)
+
+
+birds_total <- birds_observations |> 
+  left_join(y = taxalist, by = "species_id") |> 
+  left_join(y = sites, by = "site_id") |> 
+  left_join(y = surveys, by = c("site_id", "survey_id")) |>
+  select(survey_date, common_name, park_name, bird_count)
+
+```
+
+```{r}
+birds_date <- birds_total |> 
+  mutate(survey_month = lubridate::month(survey_date)) |> 
+  mutate(survey_month = as.factor(survey_month)) |> 
+  relocate(survey_month, .after = survey_date)
+
+
+```
+
+Now find the total number of birds observed by park and month:
+
+```{r}
+birds_count <- birds_date |> 
+  group_by(park_name, survey_month) |> 
+  summarize(sum(bird_count)) |> 
+  filter(park_name %in% c("Lindo", "Orme", "Palomino", "Sonrisa"))
+
+
+```
+
+
+
+
+
+
+
+
+
